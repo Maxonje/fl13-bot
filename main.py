@@ -18,11 +18,25 @@ RANK_ID = int(os.getenv("RANK_1"))
 applied_users = set()
 user_links = {}
 
-# Roblox API headers
+# Roblox API headers (without X-CSRF-TOKEN initially)
 roblox_headers = {
     'Content-Type': 'application/json',
     'Cookie': f'.ROBLOSECURITY={ROBLOX_COOKIE}'
 }
+
+# Helper function to make PATCH requests with CSRF token handling
+def patch_with_csrf(url, json_data):
+    headers = roblox_headers.copy()
+    # First PATCH attempt without token
+    response = requests.patch(url, headers=headers, json=json_data)
+    if response.status_code == 403:
+        # Get token from response headers
+        token = response.headers.get('x-csrf-token')
+        if token:
+            headers['X-CSRF-TOKEN'] = token
+            # Retry PATCH with token
+            response = requests.patch(url, headers=headers, json=json_data)
+    return response
 
 # Get Roblox user ID from username
 def get_user_id(username):
@@ -54,21 +68,17 @@ def is_in_group(user_id):
 response = None
 def set_rank(user_id):
     global response
-    response = requests.patch(
-        f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}",
-        headers=roblox_headers,
-        json={"roleId": RANK_ID}
-    )
+    url = f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}"
+    json_data = {"roleId": RANK_ID}
+    response = patch_with_csrf(url, json_data)
     print(f"[DEBUG] set_rank response: {response.status_code} - {response.text}")
     return response.status_code == 200
 
 # Demote to rank 1 with debug print
 def rank_down(user_id):
-    response = requests.patch(
-        f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}",
-        headers=roblox_headers,
-        json={"roleId": 1}
-    )
+    url = f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}"
+    json_data = {"roleId": 1}
+    response = patch_with_csrf(url, json_data)
     print(f"[DEBUG] rank_down response: {response.status_code} - {response.text}")
     return response.status_code == 200
 
