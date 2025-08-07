@@ -50,8 +50,10 @@ def is_in_group(user_id):
                 return True
     return False
 
-# Set rank with debug print
+# Set rank with debug print and global response
+response = None
 def set_rank(user_id):
+    global response
     response = requests.patch(
         f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}",
         headers=roblox_headers,
@@ -152,7 +154,9 @@ async def turfapply(ctx: discord.ApplicationContext, username: str):
     else:
         embed = discord.Embed(
             title="Error",
-            description="Something went wrong while trying to rank you. Please try again later.",
+            description=f"Something went wrong while trying to rank you.\n"
+                        f"Status code: {response.status_code}\n"
+                        f"Response: {response.text}",
             color=discord.Color.red()
         )
         await ctx.respond(embed=embed, ephemeral=True)
