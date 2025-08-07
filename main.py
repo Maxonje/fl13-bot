@@ -13,6 +13,7 @@ ALLOWED_ROLE_ID = int(os.getenv("ALLOWED_ROLE_ID"))
 ROBLOX_COOKIE = os.getenv("ROBLOX_COOKIE")
 GROUP_ID = int(os.getenv("GROUP_ID"))
 RANK_ID = int(os.getenv("RANK_1"))
+RANK_NAME = "Full Access"  # <-- rankens namn istället för bara ID
 
 # Temporary in-memory data
 applied_users = set()
@@ -156,7 +157,7 @@ async def turfapply(ctx: discord.ApplicationContext, username: str):
 
         embed = discord.Embed(
             title="Application Approved ✅",
-            description=f"You have been ranked in the Roblox group to **Rank {RANK_ID}**.",
+            description=f"You have been ranked to **{RANK_NAME}** in the Roblox group.",
             color=discord.Color.green()
         )
         embed.set_footer(text="Welcome to Turf.")
