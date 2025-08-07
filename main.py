@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-import discord
 import os
 import requests
 
@@ -148,3 +147,11 @@ async def on_member_update(before, after):
             roblox_id = user_links[discord_id]
             if rank_down(roblox_id):
                 print(f"[INFO] {after} was auto-demoted in Roblox due to lost role.")
+
+# Bot ready event
+@bot.event
+async def on_ready():
+    print(f"Bot is online as {bot.user}")
+
+# Run the bot
+bot.run(DISCORD_TOKEN)
