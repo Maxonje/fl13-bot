@@ -50,22 +50,24 @@ def is_in_group(user_id):
                 return True
     return False
 
-# Set rank
+# Set rank with debug print
 def set_rank(user_id):
     response = requests.patch(
         f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}",
         headers=roblox_headers,
         json={"roleId": RANK_ID}
     )
+    print(f"[DEBUG] set_rank response: {response.status_code} - {response.text}")
     return response.status_code == 200
 
-# Demote to rank 1
+# Demote to rank 1 with debug print
 def rank_down(user_id):
     response = requests.patch(
         f"https://groups.roblox.com/v1/groups/{GROUP_ID}/users/{user_id}",
         headers=roblox_headers,
         json={"roleId": 1}
     )
+    print(f"[DEBUG] rank_down response: {response.status_code} - {response.text}")
     return response.status_code == 200
 
 # Slash command: /turfapply
