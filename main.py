@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 import os
 import requests
+import psycopg2  # PostgreSQL-stöd
 
 intents = discord.Intents.default()
 intents.members = True
@@ -14,6 +15,7 @@ ROBLOX_COOKIE = os.getenv("ROBLOX_COOKIE")
 GROUP_ID = int(os.getenv("GROUP_ID"))
 RANK_ID = int(os.getenv("RANK_1"))
 RANK_NAME = "Full Access"  # <-- rankens namn istället för bara ID
+DATABASE_URL = os.getenv("DATABASE_URL")  # <-- lägg till denna i Railway
 
 # Temporary in-memory data
 applied_users = set()
@@ -24,6 +26,25 @@ roblox_headers = {
     'Content-Type': 'application/json',
     'Cookie': f'.ROBLOSECURITY={ROBLOX_COOKIE}'
 }
+
+# PostgreSQL-funktioner
+def get_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode='require')
+
+def has_applied(discord_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1 FROM applications WHERE discord_id = %s", (discord_id,))
+            return cur.fetchone() is not None
+
+def save_application(discord_id, roblox_id):
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO applications (discord_id, roblox_id) VALUES (%s, %s) ON CONFLICT DO NOTHING",
+                (discord_id, roblox_id)
+            )
+            conn.commit()
 
 # Helper function to make PATCH requests with CSRF token handling
 def patch_with_csrf(url, json_data):
@@ -98,8 +119,8 @@ async def turfapply(ctx: discord.ApplicationContext, username: str):
         await ctx.respond(embed=embed, ephemeral=True)
         return
 
-    # Already applied check
-    if member.id in applied_users:
+    # Already applied check (med databas)
+    if has_applied(member.id):
         embed = discord.Embed(
             title="Already Applied",
             description="You have already submitted your Turf application.",
@@ -154,6 +175,7 @@ async def turfapply(ctx: discord.ApplicationContext, username: str):
     if set_rank(user_id):
         applied_users.add(member.id)
         user_links[member.id] = user_id
+        save_application(member.id, user_id)  # <-- Lägg till i databasen
 
         embed = discord.Embed(
             title="Application Approved ✅",
